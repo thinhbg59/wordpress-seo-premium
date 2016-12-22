@@ -23,16 +23,21 @@ class WPSEO_Premium {
 
 	const OPTION_CURRENT_VERSION = 'wpseo_current_version';
 
-	const PLUGIN_VERSION_NAME = '3.2.5';
+	const PLUGIN_VERSION_NAME = '4.0.2';
 	const PLUGIN_VERSION_CODE = '16';
 	const PLUGIN_AUTHOR = 'Yoast';
-	const EDD_STORE_URL = 'http://yoast.com';
+	const EDD_STORE_URL = 'http://my.yoast.com';
 	const EDD_PLUGIN_NAME = 'Yoast SEO Premium';
 
 	/**
 	 * @var WPSEO_Redirect_Page
 	 */
 	private $redirects;
+
+	/**
+	 * @var WPSEO_WordPress_Integration[]
+	 */
+	private $integrations = array();
 
 	/**
 	 * Function that will be executed when plugin is activated
@@ -67,7 +72,39 @@ class WPSEO_Premium {
 	 * WPSEO_Premium Constructor
 	 */
 	public function __construct() {
+		$link_suggestions_service = new WPSEO_Premium_Link_Suggestions_Service();
+
+		$this->integrations = array(
+			'premium-metabox' => new WPSEO_Premium_Metabox(),
+			'prominent-words-registration' => new WPSEO_Premium_Prominent_Words_Registration(),
+			'prominent-words-endpoint' => new WPSEO_Premium_Prominent_Words_Endpoint( new WPSEO_Premium_Prominent_Words_Service() ),
+			'prominent-words-recalculation' => new WPSEO_Premium_Prominent_Words_Recalculation(),
+			'link-suggestions' => new WPSEO_Metabox_Link_Suggestions(),
+			'link-suggestions-endpoint' => new WPSEO_Premium_Link_Suggestions_Endpoint( $link_suggestions_service ),
+		);
+
 		$this->setup();
+	}
+
+	/**
+	 * Adds a feature toggle to the given feature_toggles.
+	 *
+	 * @param array $feature_toggles The feature toggles to extend.
+	 *
+	 * @return array
+	 */
+	public function add_feature_toggles( array $feature_toggles ) {
+		$language = WPSEO_Utils::get_language( get_locale() );
+
+		if ( $language === 'en' ) {
+			$feature_toggles[] = (object) array(
+				'name'    => __( 'Metabox insights', 'wordpress-seo-premium' ),
+				'setting' => 'enable_metabox_insights',
+				'label'   => __( 'The metabox insights section contains insights about your content, like an overview of the most prominent words in your text.', 'wordpress-seo-premium' ),
+			);
+		}
+
+		return $feature_toggles;
 	}
 
 	/**
@@ -82,7 +119,14 @@ class WPSEO_Premium {
 		$this->redirect_setup();
 
 		if ( is_admin() ) {
-			add_action( 'admin_init', array( $this, 'init_beacon' ) );
+			// Make sure priority is below registration of other implementations of the beacon in News, Video, etc.
+			add_action( 'admin_init', array( $this, 'init_helpscout_support' ), 1 );
+			add_filter( 'wpseo_feature_toggles', array( $this, 'add_feature_toggles' ) );
+
+			// Only register the yoast i18n when the page is a Yoast SEO page.
+			if ( $this->is_yoast_seo_premium_page( filter_input( INPUT_GET, 'page' ) ) ) {
+				$this->register_i18n_promo_class();
+			}
 
 			// Add custom fields plugin to post and page edit pages.
 			global $pagenow;
@@ -111,9 +155,6 @@ class WPSEO_Premium {
 
 			// Settings.
 			add_action( 'admin_init', array( $this, 'register_settings' ) );
-
-			// Enqueue Post and Term overview script.
-			add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_overview_script' ) );
 
 			// Licensing part.
 			$license_manager = WPSEO_Premium::get_license_manager();
@@ -158,6 +199,50 @@ class WPSEO_Premium {
 
 		add_action( 'admin_init', array( $this, 'enqueue_multi_keyword' ) );
 		add_action( 'admin_init', array( $this, 'enqueue_social_previews' ) );
+
+		add_action( 'wpseo_premium_indicator_classes', array( $this, 'change_premium_indicator' ) );
+		add_action( 'wpseo_premium_indicator_text', array( $this, 'change_premium_indicator_text' ) );
+
+		// Only initialize the AJAX for all tabs except settings.
+		$facebook_name = new WPSEO_Facebook_Profile();
+		$facebook_name->set_hooks();
+
+		foreach ( $this->integrations as $integration ) {
+			$integration->register_hooks();
+		}
+	}
+
+	/**
+	 * Checks if the page is a premium page
+	 *
+	 * @param string $page The page to check.
+	 *
+	 * @return bool
+	 */
+	private function is_yoast_seo_premium_page( $page ) {
+		$premium_pages = array( 'wpseo_redirects' );
+
+		return in_array( $page, $premium_pages );
+	}
+
+	/**
+	 * Register the promotion class for our GlotPress instance
+	 *
+	 * @link https://github.com/Yoast/i18n-module
+	 */
+	private function register_i18n_promo_class() {
+		new yoast_i18n(
+			array(
+				'textdomain'     => 'wordpress-seo-premium',
+				'project_slug'   => 'wordpress-seo-premium',
+				'plugin_name'    => 'Yoast SEO premium',
+				'hook'           => 'wpseo_admin_promo_footer',
+				'glotpress_url'  => 'http://translate.yoast.com/gp/',
+				'glotpress_name' => 'Yoast Translate',
+				'glotpress_logo' => 'https://translate.yoast.com/gp-templates/images/Yoast_Translate.svg',
+				'register_url'   => 'https://translate.yoast.com/gp/projects#utm_source=plugin&utm_medium=promo-box&utm_campaign=wpseo-i18n-promo',
+			)
+		);
 	}
 
 	/**
@@ -194,13 +279,9 @@ class WPSEO_Premium {
 	 */
 	public function enqueue_multi_keyword() {
 		global $pagenow;
-		if ( in_array( $pagenow, array(
-				'post-new.php',
-			'post.php',
-			'edit.php',
-			), true ) ) {
-			new WPSEO_Multi_Keyword();
 
+		if ( WPSEO_Metabox::is_post_edit( $pagenow ) ) {
+			new WPSEO_Multi_Keyword();
 		}
 	}
 
@@ -215,7 +296,6 @@ class WPSEO_Premium {
 			'post.php',
 			'edit.php',
 		);
-
 		$social_previews = new WPSEO_Social_Previews();
 		if ( in_array( $pagenow , $metabox_pages, true ) || WPSEO_Taxonomy::is_term_edit( $pagenow ) ) {
 			$social_previews->set_hooks();
@@ -254,26 +334,6 @@ class WPSEO_Premium {
 		if ( is_plugin_active( 'wordpress-seo/wp-seo.php' ) ) {
 			deactivate_plugins( 'wordpress-seo/wp-seo.php' );
 		}
-	}
-
-	/**
-	 * Enqueue post en term overview script
-	 *
-	 * @param string $hook The current opened page.
-	 */
-	public function enqueue_overview_script( $hook ) {
-		if ( 'edit.php' == $hook || 'edit-tags.php' == $hook || 'post.php' == $hook ) {
-			self::enqueue();
-		}
-
-	}
-
-	/**
-	 * Enqueues the do / undo redirect scripts
-	 */
-	public static function enqueue() {
-		wp_enqueue_script( 'wpseo-premium-admin-overview', plugin_dir_url( WPSEO_PREMIUM_FILE ) . 'assets/js/wpseo-premium-admin-overview' . WPSEO_CSSJS_SUFFIX . '.js', array( 'jquery' ), WPSEO_VERSION );
-		wp_localize_script( 'wpseo-premium-admin-overview', 'wpseo_premium_strings', WPSEO_Premium_Javascript_Strings::strings() );
 	}
 
 	/**
@@ -358,6 +418,34 @@ class WPSEO_Premium {
 	}
 
 	/**
+	 * Change premium indicator to green when premium is enabled
+	 *
+	 * @param string[] $classes The current classes for the indicator.
+	 * @returns string[] The new classes for the indicator.
+	 */
+	public function change_premium_indicator( $classes ) {
+		$class_no = array_search( 'wpseo-premium-indicator--no', $classes );
+
+		if ( false !== $class_no ) {
+			unset( $classes[ $class_no ] );
+
+			$classes[] = 'wpseo-premium-indicator--yes';
+		}
+
+		return $classes;
+	}
+
+	/**
+	 * Replaces the screen reader text for the premium indicator.
+	 *
+	 * @param string $text The original text.
+	 * @return string The new text.
+	 */
+	public function change_premium_indicator_text( $text ) {
+		return __( 'Enabled', 'wordpress-seo-premium' );
+	}
+
+	/**
 	 * Add redirects to admin pages so the Yoast scripts are loaded
 	 *
 	 * @param array $admin_pages Array with the admin pages.
@@ -404,16 +492,42 @@ class WPSEO_Premium {
 	}
 
 	/**
-	 * Initializes beacon
+	 * Initializes the helpscout support modal for wpseo settings pages
 	 */
-	public function init_beacon() {
+	public function init_helpscout_support() {
 		$query_var = ( $page = filter_input( INPUT_GET, 'page' ) ) ? $page : '';
 
 		// Only add the helpscout beacon on Yoast SEO pages.
-		if ( substr( $query_var, 0, 5 ) === 'wpseo' ) {
-			$beacon = yoast_get_helpscout_beacon( $query_var );
+		if ( in_array( $query_var, $this->get_beacon_pages() ) ) {
+			add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_contact_support' ) );
+			$beacon = yoast_get_helpscout_beacon( $query_var, 'no_search' );
 			$beacon->add_setting( new WPSEO_Premium_Beacon_Setting() );
 			$beacon->register_hooks();
 		}
+	}
+
+	/**
+	 * Get the pages the Premium beacon should be displayed on
+	 *
+	 * @return array
+	 */
+	private function get_beacon_pages() {
+		return array(
+			'wpseo_dashboard',
+			'wpseo_titles',
+			'wpseo_social',
+			'wpseo_xml',
+			'wpseo_advanced',
+			'wpseo_tools',
+			'wpseo_search_console',
+			'wpseo_licenses',
+		);
+	}
+
+	/**
+	 * Add the Yoast contact support assets
+	 */
+	public function enqueue_contact_support() {
+		wp_enqueue_script( 'yoast-contact-support', plugin_dir_url( WPSEO_PREMIUM_FILE ) . 'assets/js/dist/wpseo-premium-contact-support-370' . WPSEO_CSSJS_SUFFIX . '.js', array( 'jquery' ), WPSEO_VERSION );
 	}
 }
