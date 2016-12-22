@@ -97,7 +97,7 @@ class WPSEO_Social_Previews {
 	 * Register the required assets.
 	 */
 	private function register_assets() {
-		wp_register_script( 'yoast-social-preview', plugin_dir_url( WPSEO_PREMIUM_FILE ) . '/assets/js/yoast-premium-social-preview' . WPSEO_CSSJS_SUFFIX . '.js', array(
+		wp_register_script( 'yoast-social-preview', plugin_dir_url( WPSEO_PREMIUM_FILE ) . '/assets/js/dist/yoast-premium-social-preview-390' . WPSEO_CSSJS_SUFFIX . '.js', array(
 			'jquery',
 			'jquery-ui-core',
 		), WPSEO_VERSION );
@@ -106,8 +106,8 @@ class WPSEO_Social_Previews {
 
 		$deps = array( WPSEO_Admin_Asset_Manager::PREFIX . 'metabox-css' );
 
-		wp_register_style( 'yoast-social-preview-css', plugin_dir_url( WPSEO_PREMIUM_FILE ) . 'assets/dist/social_preview/yoast-social-preview.min.css', $deps, WPSEO_VERSION );
-		wp_register_style( 'yoast-premium-social-preview', plugin_dir_url( WPSEO_PREMIUM_FILE ) . 'assets/css/premium-social-preview.min.css', $deps, WPSEO_VERSION );
+		wp_register_style( 'yoast-social-preview-css', plugin_dir_url( WPSEO_PREMIUM_FILE ) . 'assets/dist/social_preview/yoast-social-preview-' . '390' . '.min.css', $deps, WPSEO_VERSION );
+		wp_register_style( 'yoast-premium-social-preview', plugin_dir_url( WPSEO_PREMIUM_FILE ) . 'assets/css/dist/premium-social-preview-' . '340' . '.min.css', $deps, WPSEO_VERSION );
 	}
 
 	/**
@@ -142,6 +142,7 @@ class WPSEO_Social_Previews {
 				),
 				'library' => $this->get_translations(),
 			),
+			'facebookNonce' => wp_create_nonce( 'get_facebook_name' ),
 		);
 	}
 
@@ -191,7 +192,7 @@ class WPSEO_Social_Previews {
 	 * @return array
 	 */
 	private function get_translations() {
-		$file = plugin_dir_path( WPSEO_FILE ) . 'premium/languages/wordpress-seo-premium-' . get_locale() . '.json';
+		$file = plugin_dir_path( WPSEO_FILE ) . 'premium/languages/wordpress-seo-premium-' . WPSEO_Utils::get_user_locale() . '.json';
 		if ( file_exists( $file ) && $file = file_get_contents( $file ) ) {
 			return json_decode( $file, true );
 		}
