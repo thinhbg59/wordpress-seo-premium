@@ -68,7 +68,6 @@ class KeywordSuggestions {
 		}
 	}
 
-
 	/**
 	 * Appends the suggestions div to the DOM.
 	 *
@@ -77,16 +76,9 @@ class KeywordSuggestions {
 	appendSuggestionsDiv() {
 		let contentDiv = jQuery( "#wpseo_content" );
 
-		let tbody = contentDiv.find( "tbody" );
-		let newRow = jQuery( "<tr><td></td></tr>");
-
-		tbody.append( newRow );
-
-		let td = newRow.find( "td" );
-
 		this.suggestionsDiv = document.createElement( "div" );
 
-		td.html( this.suggestionsDiv );
+		contentDiv.append( this.suggestionsDiv );
 	}
 
 	/**
