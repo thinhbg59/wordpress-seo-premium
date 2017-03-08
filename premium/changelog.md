@@ -1,3 +1,37 @@
+### 4.4.0: February 28th, 2017
+* Adds redirect types in the Search Console settings page.
+* Checks for links that are already used in the text when suggesting links.
+* Change links to shortlinks in premium translation promo box.
+* Includes every change in Yoast SEO core 4.4.0, see the [core changelog](https://wordpress.org/plugins/wordpress-seo/changelog/).
+
+### 4.3.2: February 16th, 2017
+* Fixes a bug where CSS & JavaScript would be loaded with incorrect version numbers.
+
+### 4.3.1: February 16th, 2017
+* Fixes a bug where a slow query would be run on every page of the admin.
+
+### 4.3.0: February 14th, 2017
+* Adds link suggestions and insights for Spanish.
+* Adds variable that indicates the recalculation is running already to prevent double executed recalculations.
+* Adds a warning when there are posts or pages that need to be analyzed for link suggestions.
+* Improves the site wide calculation of the prominent words for the link suggestions. 
+* Fixes a bug where the rendering of the columns in the post overview was incorrect. 
+* Includes every change in Yoast SEO core 4.3.0, see the [core changelog](https://wordpress.org/plugins/wordpress-seo/changelog/).
+
+### 4.2.1: February 2nd, 2017
+* Includes every change in Yoast SEO core 4.2.1, see the [core changelog](https://wordpress.org/plugins/wordpress-seo/changelog/).
+
+### 4.2.0: January 31st, 2017
+* Adds link suggestions and insights for Dutch.
+* Includes every change in Yoast SEO core 4.2.0, see the [core changelog](https://wordpress.org/plugins/wordpress-seo/changelog/).
+
+### 4.1.0: January 17th, 2017
+* Adds a feature toggle to disable link suggestions (site wide).
+* Allows contributors to also use the prominent words that link suggestions depend on, these generated a 403. 
+* Adds German support for Yoast internal linking. 
+* Improves the user interface for the prominent word recalculation.
+* Includes every change in Yoast SEO core 4.1.0, see the [core changelog](https://wordpress.org/plugins/wordpress-seo/changelog/).
+
 ### 4.0.2: December 20th, 2016
 * Adds site wide calculation of prominent words for pages.
 * Fixes a notice that would be thrown on custom post types: "Undefined property: WP_Post_Type::$rest_base".
