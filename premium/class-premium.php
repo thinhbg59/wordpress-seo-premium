@@ -23,7 +23,7 @@ class WPSEO_Premium {
 
 	const OPTION_CURRENT_VERSION = 'wpseo_current_version';
 
-	const PLUGIN_VERSION_NAME = '4.5';
+	const PLUGIN_VERSION_NAME = '4.6';
 	const PLUGIN_VERSION_CODE = '16';
 	const PLUGIN_AUTHOR = 'Yoast';
 	const EDD_STORE_URL = 'http://my.yoast.com';
@@ -84,6 +84,7 @@ class WPSEO_Premium {
 			'prominent-words-registration' => new WPSEO_Premium_Prominent_Words_Registration(),
 			'prominent-words-endpoint' => new WPSEO_Premium_Prominent_Words_Endpoint( new WPSEO_Premium_Prominent_Words_Service() ),
 			'prominent-words-recalculation' => new WPSEO_Premium_Prominent_Words_Recalculation(),
+			'prominent-words-recalculation-link' => new WPSEO_Premium_Prominent_Words_Link_Endpoint( new WPSEO_Premium_Prominent_Words_Link_Service() ),
 			'prominent-words-recalculation-notifier' => new WPSEO_Premium_Prominent_Words_Recalculation_Notifier(),
 			'prominent-words-recalculation-endpoint' => new WPSEO_Premium_Prominent_Words_Recalculation_Endpoint( new WPSEO_Premium_Prominent_Words_Recalculation_Service() ),
 			'prominent-words-version' => new WPSEO_Premium_Prominent_Words_Versioning(),
@@ -541,6 +542,9 @@ class WPSEO_Premium {
 	 * Add the Yoast contact support assets
 	 */
 	public function enqueue_contact_support() {
-		wp_enqueue_script( 'yoast-contact-support', plugin_dir_url( WPSEO_PREMIUM_FILE ) . 'assets/js/dist/wpseo-premium-contact-support-370' . WPSEO_CSSJS_SUFFIX . '.js', array( 'jquery' ), WPSEO_VERSION );
+		$asset_manager = new WPSEO_Admin_Asset_Manager();
+		$version = $asset_manager->flatten_version( WPSEO_VERSION );
+
+		wp_enqueue_script( 'yoast-contact-support', plugin_dir_url( WPSEO_PREMIUM_FILE ) . 'assets/js/dist/wpseo-premium-contact-support-' . $version . WPSEO_CSSJS_SUFFIX . '.js', array( 'jquery' ), WPSEO_VERSION );
 	}
 }
