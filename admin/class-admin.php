@@ -88,6 +88,7 @@ class WPSEO_Admin {
 
 		if ( WPSEO_Utils::is_api_available() ) {
 			$configuration = new WPSEO_Configuration_Page;
+			$configuration->set_hooks();
 			$configuration->catch_configuration_request();
 		}
 
@@ -157,6 +158,8 @@ class WPSEO_Admin {
 
 		$admin_page_hooks[ self::PAGE_IDENTIFIER ] = 'seo'; // Wipe notification bits from hooks. R.
 
+		$license_page_title = defined( 'WPSEO_PREMIUM_PLUGIN_FILE' ) ? __( 'Premium', 'wordpress-seo' ) : __( 'Go Premium', 'wordpress-seo' ) . ' ' . $this->get_premium_indicator();
+
 		// Sub menu pages.
 		$submenu_pages = array(
 			array(
@@ -224,7 +227,7 @@ class WPSEO_Admin {
 			array(
 				self::PAGE_IDENTIFIER,
 				'',
-				__( 'Go Premium', 'wordpress-seo' ) . ' ' . $this->get_premium_indicator(),
+				$license_page_title,
 				$manage_options_cap,
 				'wpseo_licenses',
 				array( $this, 'load_page' ),

@@ -5,8 +5,8 @@ License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
 Tags: SEO, XML sitemap, Google Search Console, Content analysis, Readability
 Requires at least: 4.6
-Tested up to: 4.7
-Stable tag: 4.6
+Tested up to: 4.8
+Stable tag: 4.9
 
 Improve your WordPress SEO: Write better content and have a fully optimized WordPress site using the Yoast SEO plugin.
 
@@ -124,29 +124,31 @@ You'll find answers to many of your questions on [kb.yoast.com](https://kb.yoast
 
 == Changelog ==
 
-= 4.6.0 =
+= 4.9.0 =
 
-Release Date: April 11th, 2017
-
-* Enhancements
-	* Improves a language string, props [Sören Wrede](https://github.com/Soean).
-	* Improves the configuration wizard with clear information about the configuration.
-	* Adds the ability to mark posts as cornerstone content.
-
-= 4.5.0 =
-
-Release Date: March 21st, 2017
-
-* Additions
-	* Adds a message about the PHP version for WordPress installations that run on PHP 5.2. The warning also has pointers on how to address this situation. [We have an article about why we are doing this on yoast.com](https://yoa.st/x6).
+Release Date: June 7th, 2017
 
 * Bugfixes
-	* Adds a check for the breadcrumbs-home option to prevent a blank entry being added to the crumbs array, props [codemonkeynorth](https://github.com/codemonkeynorth)
+	* Fixes a bug where there were certain assessments missing when switching to cornerstone content.
+	* Fixes a bug where the configuration wizard button was visible for users who didn't have enough rights to access the configuration wizard.
+	* Fixes a bug where the column `ID` was ambiguous, causing an SQL error.
+	* Fixes a bug where the category URL in the sitemap was encoded twice.
+	* Fixes a bug where an old upgrade notice is not removed.
 
 * Enhancements
-	* Throws a warning in the admin for the RS Head Cleaner plugin, because the plugin cloaks.
-	* Improves copy about Yoast SEO Premium benefits.
-	* Adds link to our knowledge base article about connecting your website to Google Search Console.
+	* Removes the noodp advanced robots meta value as it is no longer used.
+	* Loads the translations only when the configuration wizard endpoint is called, instead of every time `rest_api_init` is called.
+
+= 4.8.0 =
+
+Release Date: May 23rd, 2017
+
+* Bugfixes
+	* Fixes a bug where the tabs in the social and advanced metabox section are gone when keyword analysis has been disabled.
+
+* Enhancements
+	* Optimizes the way the cornerstone flag is saved.
+	* Analyzes the content using cornerstone assessors when a post or page is cornerstone content.
 
 = Earlier versions =
 
